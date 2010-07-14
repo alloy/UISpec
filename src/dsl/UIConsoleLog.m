@@ -10,7 +10,7 @@
 
 -(void)onSpec:(UISpec *)spec {
 	currentSpec = NSStringFromClass([spec class]);
-	NSLog(@"\n%@", currentSpec);
+	printf("%s\n", [currentSpec UTF8String]);
 }
 
 -(void)onBeforeAll{}
@@ -31,7 +31,7 @@
 
 -(void)onExample:(NSString *)example {
 	currentExample = example;
-	NSLog(@"\n- %@", currentExample);
+	printf("- %s\n", [currentExample UTF8String]);
 }
 
 -(void)onExampleException:(NSException *)exception {
@@ -69,7 +69,7 @@
 	[log appendFormat:@"\n\nFinished in %f seconds", fabsf([start timeIntervalSinceNow])];
 	
 	[log appendFormat:@"\n\n%i examples %d failures", count, errors.count];
-	NSLog(log);
+	printf("%s\n", [log UTF8String]);
 }
 
 @end

@@ -46,6 +46,7 @@ static UILog *logger = nil;
 }
 
 +(void)runSpecClasses:(NSArray *)specClasses {
+	int failures = 0;
 	if (specClasses.count == 0) return;
 	int examplesCount = 0;
 	[logger onStart];
@@ -53,12 +54,15 @@ static UILog *logger = nil;
 		NSArray *examples = [self examplesForSpecClass:class];
 		if (examples.count == 0) continue;
 		examplesCount = examplesCount + examples.count;
-		[self runExamples:examples onSpec:class];
+		failures += [self runExamples:examples onSpec:class];
 	}
 	[logger onFinish:examplesCount];
+	// TODO: clean this up as a nice patch
+	exit(failures);
 }
 
-+(void)runExamples:(NSArray *)examples onSpec:(Class *)class {
++(int)runExamples:(NSArray *)examples onSpec:(Class *)class {
+	int failures = 0;
 	UISpec *spec = [[[class alloc] init] autorelease];
 	[logger onSpec:spec];
 	if ([spec respondsToSelector:@selector(beforeAll)]) {
@@ -66,6 +70,7 @@ static UILog *logger = nil;
 			[logger onBeforeAll];
 			[spec beforeAll];
 		} @catch (NSException *exception) {
+			failures += 1;
 			[logger onBeforeAllException:exception];
 		}
 	}
@@ -75,6 +80,7 @@ static UILog *logger = nil;
 				[logger onBefore:exampleName];
 				[spec before];
 			} @catch (NSException *exception) {
+				failures += 1;
 				[logger onBeforeException:exception];
 			}
 		}
@@ -82,6 +88,7 @@ static UILog *logger = nil;
 			[logger onExample:exampleName];
 			[spec performSelector:NSSelectorFromString(exampleName)];
 		} @catch (NSException *exception) {
+			failures += 1;
 			[logger onExampleException:exception];
 		}
 		if ([spec respondsToSelector:@selector(after)]) {
@@ -89,6 +96,7 @@ static UILog *logger = nil;
 				[logger onAfter:exampleName];
 				[spec after];
 			} @catch (NSException *exception) {
+				failures += 1;
 				[logger onAfterException:exception];
 			}
 		}
@@ -98,10 +106,12 @@ static UILog *logger = nil;
 			[logger onAfterAll];
 			[spec afterAll];
 		} @catch (NSException *exception) {
+			failures += 1;
 			[logger onAfterAllException:exception];
 		}
 	}
 	[logger afterSpec:spec];
+	return failures;
 }
 
 +(NSDictionary *)specsAndExamples {
